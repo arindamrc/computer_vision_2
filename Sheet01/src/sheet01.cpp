@@ -8,8 +8,8 @@ using namespace std;
 using namespace cv;
 
 /** classification header **/
-#define NUM_ITERATIONS 5
-#define STEP_SIZE 1
+#define NUM_ITERATIONS 1e4
+#define STEP_SIZE 0.01
 
 struct ClassificationParam{
         string posTrain, negTrain;
@@ -86,18 +86,18 @@ int main()
 //         reg.testLinearRegresssion();
 //         reg.trainFinite_RBF_KernelRegression();
 //         reg.testFinite_RBF_KernelRegression();
-        reg.trainDualRegression();
-        reg.testDualRegression();
+//         reg.trainDualRegression();
+//         reg.testDualRegression();
 
-        //     ClassificationParam cparam;
-        //     cparam.posTrain = "../data/bottle_train.txt";
-        //     cparam.negTrain = "../data/horse_train.txt";
-        //     cparam.posTest  = "../data/bottle_test.txt";
-        //     cparam.negTest  = "../data/horse_test.txt";
-        // 
-        //     LogisticRegression cls(cparam);
-        //cls.learnClassifier();
-        //cls.testClassifier();
+        ClassificationParam cparam;
+        cparam.posTrain = "./data/bottle_train.txt";
+        cparam.negTrain = "./data/horse_train.txt";
+        cparam.posTest  = "./data/bottle_test.txt";
+        cparam.negTest  = "./data/horse_test.txt";
+
+        LogisticRegression cls(cparam);
+        cls.learnClassifier();
+        cls.testClassifier();
 
         return 0;
 }
@@ -445,5 +445,91 @@ int Regression::testDualRegression()
         std::cout << "avg_sq_diff: " << avg_sq_diff << std::endl;
 }
 
+int LogisticRegression::learnClassifier()
+{
+//         std::cout << "train r: " << this->train.rows << ", c: " << this->train.cols << std::endl;
+        std::cout << "gtLabelTrain r: " << this->gtLabelTrain.rows << ", c: " << this->gtLabelTrain.cols << std::endl;
+        
+        int D = this->train.rows; // the dimension D of the parameter vector
+        
+//         Mat phi;
+        phi.create(D, 1, CV_32F);
+        phi.setTo(1.0/D); // set uniform value for all parameters
+        
+        Mat dL, ddL;
+        dL.create(D, 1, CV_32F);
+        ddL.create(D, D, CV_32F);
+        
+//         std::cout << "phi r: " << phi.rows << ", c: " << phi.cols << std::endl;
+        
+        // perform optimization
+        for(int iter = 0; iter < NUM_ITERATIONS; iter++) {
+                
+                // clear accumulators
+                dL.setTo(0.0f);
+                ddL.setTo(0.0f);
+                
+                // for each training sample
+                for(int i = 0; i < this->train.cols; i++){
+                      Mat xi = this->train.col(i);
+                      
+//                       std::cout << "xi r: " << xi.rows << ", c: " << xi.cols << std::endl;
+                      
+                      Mat tmp = phi.t() * xi;
+//                       std::cout << "tmp r: " << tmp.rows << ", c: " << tmp.cols << std::endl;
+                      float ai = -tmp.at<float>(0,0);
+                      dL = dL + (xi * (this->sigmoid(ai) - this->gtLabelTrain.at<float>(0, i)));
+//                       std::cout << "dL r: " << dL.rows << ", c: " << dL.cols << std::endl;
+//                       ddL = ddL + ( xi * xi.t() * (this->sigmoid(ai) * (1 - this->sigmoid(ai))));
+//                       std::cout << "ddL r: " << ddL.rows << ", c: " << ddL.cols << std::endl;
+                }
+//                 std::cout << "ddL r: " << ddL.rows << ", c: " << ddL.cols << std::endl;
+                // update parameter estimate based on current sample
+                dL = -1.0 * dL;
+//                 ddL = -1.0 * ddL;
+//                 Mat ddL_inv = ddL.inv(DECOMP_SVD);
+//                 std::cout << "ddL_inv r: " << ddL_inv.rows << ", c: " << ddL_inv.cols << std::endl;
+//                 std::cout << "dL r: " << dL.rows << ", c: " << dL.cols << std::endl;
+                // Applying Newton's method
+//                 phi = phi + STEP_SIZE * ddL_inv * dL;
+                // Applying simple gradient ascent method
+                if(iter % 100 == 0){
+                        std::cout << iter << "\t";
+                }
+                phi = phi + STEP_SIZE * dL;
+        }
+        std::cout << "params: " << phi.t() << std::endl;
+        std::cout << std::endl;
+        return 0;
+}
+
+int LogisticRegression::testClassifier()
+{
+        std::cout << "test r: " << this->test.rows << ", c: " << this->test.cols << std::endl;
+        std::cout << "test labels: " << gtLabelTest << std::endl;
+        // for each test sample
+        int tp = 0, fp = 0, tn = 0, fn = 0;
+        for(int i = 0; i < this->test.cols; i++){
+                Mat xi = this->test.col(i);
+                Mat tmp = phi.t() * xi;
+                float ai = -tmp.at<float>(0,0);
+                int pred = cvRound(this->sigmoid(ai)); // the prediction is in [0,1]. Round it off to 0 or 1 to compare it to test label.
+                int tru_labl = this->gtLabelTest.at<float>(0,i);
+                std::cout << "pred orig: " << this->sigmoid(ai) << ", rounded: " << pred << ", tru_labl: " << tru_labl << std::endl;
+                if(pred == 1 && tru_labl == 1){
+                        tp++;
+                }else if(pred == 1 && tru_labl == 0) {
+                        fp++;
+                }else if(pred == 0 && tru_labl == 1) {
+                        fn++;
+                }else if(pred == 0 && tru_labl == 0) {
+                        tp++;
+                }
+        }
+        float accuracy = (1.0 * (tp + tn)) / (tp + tn + fp + fn);
+        std::cout << "tp= " << tp << ", tn= " << tn << ", fp= " << fp << ", fn= " << fn << std::endl;
+        std::cout << "accuracy= " << accuracy << std::endl;
+        return 0;
+}
 
 
