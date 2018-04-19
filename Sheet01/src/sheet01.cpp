@@ -86,21 +86,21 @@ int main()
         // Linear regression
         reg.trainLinearRegression();
         reg.testLinearRegresssion();
-//         reg.trainFinite_RBF_KernelRegression();
-//         reg.testFinite_RBF_KernelRegression();
-//         reg.trainDualRegression();
-//         reg.testDualRegression();
+        reg.trainFinite_RBF_KernelRegression();
+        reg.testFinite_RBF_KernelRegression();
+        reg.trainDualRegression();
+        reg.testDualRegression();
 
         // Logistic regression
-//         ClassificationParam cparam;
-//         cparam.posTrain = "./data/bottle_train.txt";
-//         cparam.negTrain = "./data/horse_train.txt";
-//         cparam.posTest  = "./data/bottle_test.txt";
-//         cparam.negTest  = "./data/horse_test.txt";
+        ClassificationParam cparam;
+        cparam.posTrain = "./data/bottle_train.txt";
+        cparam.negTrain = "./data/horse_train.txt";
+        cparam.posTest  = "./data/bottle_test.txt";
+        cparam.negTest  = "./data/horse_test.txt";
 
-//         LogisticRegression cls(cparam);
-//         cls.learnClassifier();
-//         cls.testClassifier();
+        LogisticRegression cls(cparam);
+        cls.learnClassifier();
+        cls.testClassifier();
 
         return 0;
 }
