@@ -2,13 +2,18 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/objdetect.hpp>
 #include <iostream>
 #include <string.h>
 #include <fstream>
 #include <cmath>
+#include <vector>
 #include <stdlib.h>
 #include "Types.hh"
 #include "AdaBoost.hh"
+
+using namespace cv;
+using namespace std;
 
 void readData(const char* filename, std::vector<Example>& data) {
 	std::ifstream f(filename);
@@ -50,12 +55,43 @@ int nr2(const char* trainFile, const char* testFile, u32 adaBoostIterations) {
 	return 0;
 }
 
+void violaAndJones(Mat& img_gray, Mat& img_color){
+        CascadeClassifier cascade;
+        const float scale_factor(1.2f);
+        const int min_neighbors(3);
+
+        if (cascade.load("./face-model.xml")) {
+                equalizeHist(img_gray, img_gray);
+                vector<Rect> objs;
+                cascade.detectMultiScale(img_gray, objs, scale_factor, min_neighbors);
+
+                for (int n = 0; n < objs.size(); n++) {
+                        rectangle(img_color, objs[n], Scalar(255,0,0), 8);
+                }
+                imshow("Viola Jones", img_color);
+                waitKey(0);
+        }
+        else{
+                std::cerr << "Unable to load face models" << std::endl;
+        }
+}
+
+void nr1(){
+        string images[3] = {
+                "./img1.jpg", 
+                "./img2.jpg", 
+                "./img3.jpg"
+        };
+        for(int i = 0; i < images->size(); i++){
+               Mat img_gray = imread(images[i], CV_LOAD_IMAGE_GRAYSCALE); 
+               Mat img_color = imread(images[i], CV_LOAD_IMAGE_COLOR); 
+               violaAndJones(img_gray, img_color);
+        }
+}
+
 
 int main(int argc, char* argv[])
 {
-    // TODO implement your solution here
-
-    // feel free to create additional .cpp files for other classes if needed
-
-    return 0;
+        nr1();
+        return 0;
 }
