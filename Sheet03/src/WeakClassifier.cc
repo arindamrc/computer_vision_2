@@ -21,8 +21,9 @@ Stump::Stump() :
 		classLabelRight_(0)
 {}
 
-void Stump::initialize(u32 dimension) {
+void Stump::initialize(u32 dimension, f32 threshold) {
 	dimension_ = dimension;
+        splitValue_ = threshold;
 }
 
 f32 Stump::weightedGain(const std::vector<Example>& data, const Vector& weights, u32 splitAttribute, f32 splitValue, u32& resultingLeftLabel) {

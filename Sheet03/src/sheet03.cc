@@ -31,30 +31,6 @@ void readData(const char* filename, std::vector<Example>& data) {
 	f.close();
 }
 
-int nr2(const char* trainFile, const char* testFile, u32 adaBoostIterations) {
-	std::vector<Example> trainingData;
-	std::vector<Example> testData;
-	readData(trainFile, trainingData);
-	readData(testFile, testData);
-
-	// train cascade of weak classifiers
-	AdaBoost adaBoost(adaBoostIterations);
-	adaBoost.initialize(trainingData);
-	adaBoost.trainCascade(trainingData);
-
-	// classification on test data
-	u32 nClassificationErrors = 0;
-	for (u32 i = 0; i < testData.size(); i++) {
-		u32 c = adaBoost.classify(testData.at(i).attributes);
-		nClassificationErrors += (c == testData.at(i).label ? 0 : 1);
-	}
-	f32 accuracy = 1.0 - (f32) nClassificationErrors / (f32) testData.size();
-
-	std::cout << "Classified " << testData.size() << " examples." << std::endl;
-	std::cout << "Accuracy: " << accuracy << " (" << testData.size() - nClassificationErrors << "/" << testData.size() << ")" << std::endl;
-	return 0;
-}
-
 void violaAndJones(Mat& img_gray, Mat& img_color){
         CascadeClassifier cascade;
         const float scale_factor(1.2f);
@@ -87,6 +63,33 @@ void nr1(){
                Mat img_color = imread(images[i], CV_LOAD_IMAGE_COLOR); 
                violaAndJones(img_gray, img_color);
         }
+}
+
+void nr2(const char* trainFile, const char* testFile, u32 adaBoostIterations) {
+	std::vector<Example> trainingData;
+	std::vector<Example> testData;
+	readData(trainFile, trainingData);
+	readData(testFile, testData);
+
+	// train cascade of weak classifiers
+	AdaBoost adaBoost(adaBoostIterations);
+	adaBoost.initialize(trainingData);
+	adaBoost.trainCascade(trainingData);
+
+	// classification on test data
+	u32 nClassificationErrors = 0;
+	for (u32 i = 0; i < testData.size(); i++) {
+		u32 c = adaBoost.classify(testData.at(i).attributes);
+		nClassificationErrors += (c == testData.at(i).label ? 0 : 1);
+	}
+	f32 accuracy = 1.0 - (f32) nClassificationErrors / (f32) testData.size();
+
+	std::cout << "Classified " << testData.size() << " examples." << std::endl;
+	std::cout << "Accuracy: " << accuracy << " (" << testData.size() - nClassificationErrors << "/" << testData.size() << ")" << std::endl;
+}
+
+void nr3(){
+        
 }
 
 
