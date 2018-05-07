@@ -65,27 +65,32 @@ void nr1(){
         }
 }
 
-void nr2(const char* trainFile, const char* testFile, u32 adaBoostIterations) {
+void nr2(const char* trainFile, const char* testFile) {
+        u32 adaBoostIterations[] = {1,2,3,4,5,10,15,20,30,40,50,80,100,150,250,500};
 	std::vector<Example> trainingData;
 	std::vector<Example> testData;
 	readData(trainFile, trainingData);
 	readData(testFile, testData);
 
-	// train cascade of weak classifiers
-	AdaBoost adaBoost(adaBoostIterations);
-	adaBoost.initialize(trainingData);
-	adaBoost.trainCascade(trainingData);
+        for(int k : adaBoostIterations){
+                // train cascade of weak classifiers
+                AdaBoost adaBoost(k);
+                adaBoost.initialize(trainingData);
+                adaBoost.trainCascade(trainingData);
 
-	// classification on test data
-	u32 nClassificationErrors = 0;
-	for (u32 i = 0; i < testData.size(); i++) {
-		u32 c = adaBoost.classify(testData.at(i).attributes);
-		nClassificationErrors += (c == testData.at(i).label ? 0 : 1);
-	}
-	f32 accuracy = 1.0 - (f32) nClassificationErrors / (f32) testData.size();
+                // classification on test data
+                u32 nClassificationErrors = 0;
+                for (u32 i = 0; i < testData.size(); i++) {
+                        u32 c = adaBoost.classify(testData.at(i).attributes);
+                        nClassificationErrors += (c == testData.at(i).label ? 0 : 1);
+                }
+                f32 accuracy = 1.0 - (f32) nClassificationErrors / (f32) testData.size();
 
-	std::cout << "Classified " << testData.size() << " examples." << std::endl;
-	std::cout << "Accuracy: " << accuracy << " (" << testData.size() - nClassificationErrors << "/" << testData.size() << ")" << std::endl;
+                std::cout << "k= " << k << std::endl;
+                std::cout << "Classified " << testData.size() << " examples." << std::endl;
+                std::cout << "Accuracy: " << accuracy << " (" << testData.size() - nClassificationErrors << "/" << testData.size() << ")" << std::endl;
+//                 std::cout << k << "," << accuracy << std::endl;
+        }
 }
 
 void nr3(){
@@ -95,6 +100,7 @@ void nr3(){
 
 int main(int argc, char* argv[])
 {
-        nr1();
+//         nr1();
+        nr2("./splice/splice.train", "./splice/splice.test");
         return 0;
 }

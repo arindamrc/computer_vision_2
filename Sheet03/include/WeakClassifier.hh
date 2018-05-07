@@ -20,13 +20,11 @@ private:
 	u32 classLabelLeft_;
 	u32 classLabelRight_;
 
-	f32 weightedGain(const std::vector<Example>& data, const Vector& weights, u32 splitAttribute, f32 splitValue, u32& resultingLeftLabel);
 public:
 	Stump();
-	void initialize(u32 dimension, f32 threshold);
-	void train(const std::vector<Example>& data, const Vector& weights);
+	void initialize(u32 dimension, u32 splitAttribute, f32 threshold, u32 classLabelLt);
+	std::vector<u32> train(const std::vector<Example>& data, const Vector& weights);
 	u32 classify(const Vector& v);
-	void classify(const std::vector<Example>& data, std::vector<u32>& classAssignments);
 };
 
 #endif /* NEARESTMEANCLASSIFIER_HH_ */
