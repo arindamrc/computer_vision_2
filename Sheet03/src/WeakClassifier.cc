@@ -29,6 +29,9 @@ void Stump::initialize(u32 dimension, u32 splitAttribute, f32 threshold, u32 cla
         classLabelRight_ = 1 - classLabelLt;
 }
 
+/*
+ * train this classifier on all training samples and return the results as a vector.
+ */
 std::vector<u32> Stump::train(const std::vector<Example>& data, const Vector& weights) {
         std::vector<u32> classAssignments;
         for(int i = 0; i < data.size(); i++){
@@ -38,6 +41,9 @@ std::vector<u32> Stump::train(const std::vector<Example>& data, const Vector& we
         return classAssignments;
 }
 
+/*
+ * Classify a sample. Result is either 0 or 1.
+ */
 u32 Stump::classify(const Vector& v) {
         f32 attrValue = v[this->splitAttribute_];
         if(attrValue < this->splitValue_){

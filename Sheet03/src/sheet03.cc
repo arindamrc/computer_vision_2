@@ -38,12 +38,12 @@ void violaAndJones(Mat& img_gray, Mat& img_color){
         const int min_neighbors(3);
 
         if (cascade.load("./face-model.xml")) {
-                equalizeHist(img_gray, img_gray);
-                vector<Rect> objs;
-                cascade.detectMultiScale(img_gray, objs, scale_factor, min_neighbors);
+                equalizeHist(img_gray, img_gray); // improve image contrast to aid detection
+                vector<Rect> objs; // the detected face objects
+                cascade.detectMultiScale(img_gray, objs, scale_factor, min_neighbors); // viola and jones multi-scale face detector
 
                 for (int n = 0; n < objs.size(); n++) {
-                        rectangle(img_color, objs[n], Scalar(255,0,0), 8);
+                        rectangle(img_color, objs[n], Scalar(255,0,0), 8); // bounding rectangles on all faces
                 }
                 imshow("Viola Jones", img_color);
                 waitKey(0);
@@ -67,7 +67,7 @@ void nr1(){
 }
 
 void nr2(const char* trainFile, const char* testFile) {
-        u32 adaBoostIterations[] = {1,2,3,4,5,10,15,20,30,40,50,80,100,150,250,500};
+        u32 adaBoostIterations[] = {1,2,3,4,5,10,15,20,30,40,50,80,100,150,250,500}; // different experiments with varying counts of weak learners
 	std::vector<Example> trainingData;
 	std::vector<Example> testData;
 	readData(trainFile, trainingData);

@@ -8,14 +8,18 @@
 #include <limits>
 #include "Tracking.hh"
 
-
+/*
+ * Extracts a histogram of all intensity values from an image patch centered at a given point.
+ */
 void Tracker::computeHistogram(const cv::Mat& image, const cv::Point& p, Vector& histogram)
 {
         f32 half_width = _objectWindow_width / 2.0;
         f32 half_height = _objectWindow_height / 2.0;
         int histSize = 256;
         float range[] = {0, 256} ;
-        const float* histRange = {range};
+        const float* histRange = {range}; // indicates all bins in the histogram
+        
+        // The bounding points of the image patch
         u32 tl_x = (p.x - half_width) > 0 ? (p.x - half_width) : 0;
         u32 tl_y = (p.y - half_height) > 0 ? (p.y - half_height) : 0;
         u32 br_x = (p.x + half_width) < image.cols ? (p.x + half_width) : (image.cols - 1);
@@ -24,13 +28,14 @@ void Tracker::computeHistogram(const cv::Mat& image, const cv::Point& p, Vector&
         cv::Point pt_tl(tl_x, tl_y);
         cv::Point pt_br(br_x, br_y);
         
-        cv::Rect roi(pt_tl, pt_br);
+        cv::Rect roi(pt_tl, pt_br); // The region of interest
         
-        cv::Mat patch = image(roi);
-        cv::cvtColor(patch, patch, CV_BGR2GRAY);
+        cv::Mat patch = image(roi); // The extracted patch
+        
+        cv::cvtColor(patch, patch, CV_BGR2GRAY); // Convert to intensity values only
         histogram.resize(histSize);
         cv::Mat hist;
-        cv::calcHist(&patch, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+        cv::calcHist(&patch, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false); // gives a histogram over the supplied range
 //         cv::normalize(hist, hist, 1, 0, cv::NORM_L1); // normalize?
         if (hist.isContinuous()) {
                 histogram.assign((float*)hist.datastart, (float*)hist.dataend);
@@ -39,6 +44,9 @@ void Tracker::computeHistogram(const cv::Mat& image, const cv::Point& p, Vector&
         }
 }
 
+/*
+ * Draw a frame around the predicted center point. The frame size is 121 x 61.
+ */
 void Tracker::drawTrackedFrame(cv::Mat& image, cv::Point& position)
 {
         cv::rectangle(image, cv::Point(position.x - _objectWindow_width / 2, position.y - _objectWindow_height / 2),
@@ -49,21 +57,30 @@ void Tracker::drawTrackedFrame(cv::Mat& image, cv::Point& position)
 	cv::waitKey(0);
 }
 
+/*
+ * Looks at every pixel in a window around the lat tracked point and expresses a confidence value for each of them. 
+ * This value is the likelihood of the tracked object being centered at that location. The location of the pixel with 
+ * the highest confidence value is the next object center.
+ */
 void Tracker::findBestMatch(const cv::Mat& image, cv::Point& lastPosition, AdaBoost& adaBoost)
 {
+        // Find the top-left corners of the search window.
         u32 tl_x = (lastPosition.x - (0.5 * _searchWindow_width)) > 0 ? (lastPosition.x - (0.5 * _searchWindow_width)) : 0;
         u32 tl_y = (lastPosition.y - (0.5 * _searchWindow_height)) > 0 ? (lastPosition.y - (0.5 * _searchWindow_height)) : 0;
         u32 lbl_pos = 1;
         f32 max_confidence = -1.0 * std::numeric_limits<f32>::max();
         cv::Point mostLikelyPt;
+        
+        // for each pixel within the search window.
         for(int c = tl_x; c < tl_x + _searchWindow_width; c++){
                 for(int r = tl_y; r < tl_y + _searchWindow_height; r++){
                         Vector histogram;
+                        // make the dimensions bounded
                         u32 x = (c < image.cols) ? c : image.cols;
                         u32 y = (r < image.rows) ? r : image.rows;
-                        cv::Point windowPt(x,y);
+                        cv::Point windowPt(x,y); // point under consideration
                         computeHistogram(image, windowPt, histogram);
-                        f32 confidence = adaBoost.confidence(histogram, lbl_pos);
+                        f32 confidence = adaBoost.confidence(histogram, lbl_pos); // get the confidence in this pixel
                         if(confidence > max_confidence){
                                 max_confidence = confidence;
                                 mostLikelyPt = windowPt;
@@ -73,6 +90,9 @@ void Tracker::findBestMatch(const cv::Mat& image, cv::Point& lastPosition, AdaBo
         lastPosition = mostLikelyPt;
 }
 
+/*
+ * Generates a random integer within supplied range. Default is min = -10, max = 10
+ */
 u32 Tracker::getRandomDisplacement(u32 min, u32 max)
 {
         f32 r = min + rand() % (max - min + 1);
@@ -84,6 +104,8 @@ void Tracker::generateTrainingData(std::vector<Example>& data, const std::vector
 {
         int lbl_positive = 1;
         int lbl_negative = 0;
+        
+        // for each reference frame
         for(int i = 0; i < imageSequence.size(); i++){
                 // positive example
                 cv::Point pt_pos = referencePoints[i];
