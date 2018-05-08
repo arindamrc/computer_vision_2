@@ -22,7 +22,6 @@ class Tracker{
 private:
         void computeHistogram(const cv::Mat& image, const cv::Point& p, Vector& histogram);
         void generateTrainingData(std::vector<Example>& data, const std::vector<cv::Mat>& imageSequence, const std::vector<cv::Point>& referencePoints);
-        void loadImage(const std::string& imageFile, cv::Mat& image);
         void loadTrainFrames(const char* trainDataFile, std::vector<cv::Mat>& imageSequence,
                         std::vector<cv::Point>& referencePoints);
         void loadTestFrames(const char* testDataFile, std::vector<cv::Mat>& imageSequence, cv::Point& startingPoint);

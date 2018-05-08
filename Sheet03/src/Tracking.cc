@@ -31,7 +31,7 @@ void Tracker::computeHistogram(const cv::Mat& image, const cv::Point& p, Vector&
         histogram.resize(histSize);
         cv::Mat hist;
         cv::calcHist(&patch, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
-        // cv::normalize(hist, hist, 1, 0, cv::NORM_L1); // normalize?
+//         cv::normalize(hist, hist, 1, 0, cv::NORM_L1); // normalize?
         if (hist.isContinuous()) {
                 histogram.assign((float*)hist.datastart, (float*)hist.dataend);
         } else {
@@ -54,7 +54,7 @@ void Tracker::findBestMatch(const cv::Mat& image, cv::Point& lastPosition, AdaBo
         u32 tl_x = (lastPosition.x - (0.5 * _searchWindow_width)) > 0 ? (lastPosition.x - (0.5 * _searchWindow_width)) : 0;
         u32 tl_y = (lastPosition.y - (0.5 * _searchWindow_height)) > 0 ? (lastPosition.y - (0.5 * _searchWindow_height)) : 0;
         u32 lbl_pos = 1;
-        f32 max_confidence = -std::numeric_limits<f32>::min();
+        f32 max_confidence = -1.0 * std::numeric_limits<f32>::max();
         cv::Point mostLikelyPt;
         for(int c = tl_x; c < tl_x + _searchWindow_width; c++){
                 for(int r = tl_y; r < tl_y + _searchWindow_height; r++){
@@ -64,13 +64,11 @@ void Tracker::findBestMatch(const cv::Mat& image, cv::Point& lastPosition, AdaBo
                         cv::Point windowPt(x,y);
                         computeHistogram(image, windowPt, histogram);
                         f32 confidence = adaBoost.confidence(histogram, lbl_pos);
-//                         std::cout << confidence << "\t";
                         if(confidence > max_confidence){
                                 max_confidence = confidence;
                                 mostLikelyPt = windowPt;
                         }
                 }
-                std::cout << max_confidence << std::endl;
         }
         lastPosition = mostLikelyPt;
 }
@@ -140,10 +138,6 @@ void Tracker::generateTrainingData(std::vector<Example>& data, const std::vector
         }
 }
 
-void Tracker::loadImage(const std::string& imageFile, cv::Mat& image)
-{
-}
-
 void Tracker::loadTestFrames(const char* testDataFile, std::vector<cv::Mat>& imageSequence, cv::Point& startingPoint)
 {
         std::ifstream f(testDataFile);
@@ -167,7 +161,6 @@ void Tracker::loadTrainFrames(const char* trainDataFile, std::vector<cv::Mat>& i
 	std::string frame_name;
         u32 x,y;
         while(f >> frame_name >> x >> y){
-//                 std::cout << frame_name << "," << x << "," << y << std::endl; 
                 frame_name = prefix + frame_name;
                 cv::Mat img = cv::imread(frame_name);
                 cv::Point p(x,y);

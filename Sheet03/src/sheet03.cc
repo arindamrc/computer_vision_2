@@ -96,7 +96,7 @@ void nr2(const char* trainFile, const char* testFile) {
 
 void nr3(){
       Tracker tracker;
-      tracker.track("./nemo/frames.train","./nemo/frames.test",50);
+      tracker.track("./nemo/frames.train","./nemo/frames.test", 200);
 }
 
 
