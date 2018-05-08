@@ -16,6 +16,8 @@
 #define _displacement_x 30 //120
 #define _displacement_y 15 //60
 
+#define _sample_count 5
+
 class Tracker{
 private:
         void computeHistogram(const cv::Mat& image, const cv::Point& p, Vector& histogram);

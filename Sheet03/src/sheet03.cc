@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "Types.hh"
 #include "AdaBoost.hh"
+#include "Tracking.hh"
 
 using namespace cv;
 using namespace std;
@@ -94,13 +95,15 @@ void nr2(const char* trainFile, const char* testFile) {
 }
 
 void nr3(){
-        
+      Tracker tracker;
+      tracker.track("./nemo/frames.train","./nemo/frames.test",50);
 }
 
 
 int main(int argc, char* argv[])
 {
 //         nr1();
-        nr2("./splice/splice.train", "./splice/splice.test");
+//         nr2("./splice/splice.train", "./splice/splice.test");
+        nr3();
         return 0;
 }
