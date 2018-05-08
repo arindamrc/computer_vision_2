@@ -26,6 +26,7 @@ private:
         void loadTestFrames(const char* testDataFile, std::vector<cv::Mat>& imageSequence, cv::Point& startingPoint);
         void findBestMatch(const cv::Mat& image, cv::Point& lastPosition, AdaBoost& adaBoost);
         void drawTrackedFrame(cv::Mat& image, cv::Point& position);
+        u32 getRandomDisplacement(u32 min = -10, u32 max = 10);
 public:
         int track(const char* trainFName, const char* testFName, u32 adaBoostIterations);        
 };

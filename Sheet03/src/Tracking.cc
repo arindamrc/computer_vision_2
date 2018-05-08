@@ -1,25 +1,106 @@
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
 #include <sstream>
+#include <random>
 #include "Tracking.hh"
 
 
 void Tracker::computeHistogram(const cv::Mat& image, const cv::Point& p, Vector& histogram)
 {
+        f32 half_width = _objectWindow_width / 2.0;
+        f32 half_height = _objectWindow_height / 2.0;
+        int histSize = 256;
+        float range[] = {0, 256} ;
+        const float* histRange = {range};
+        cv::Rect roi(
+                p.x - half_width, 
+                p.y - half_height, 
+                _objectWindow_width, 
+                _objectWindow_height
+        );
+        cv::Mat patch = image(roi);
+        cv::cvtColor(patch, patch, CV_BGR2GRAY);
+        histogram.resize(histSize);
+        cv::Mat hist;
+        cv::calcHist(&patch, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+        // cv::normalize(hist, hist, 1, 0, cv::NORM_L1); // normalize?
+        if (hist.isContinuous()) {
+                histogram.assign((float*)hist.datastart, (float*)hist.dataend);
+        } else {
+                hist.copyTo(histogram);
+        }
 }
 
 void Tracker::drawTrackedFrame(cv::Mat& image, cv::Point& position)
 {
+        cv::rectangle(image, cv::Point(position.x - _objectWindow_width / 2, position.y - _objectWindow_height / 2),
+			cv::Point(position.x + _objectWindow_width / 2, position.y + _objectWindow_height / 2), 0, 3);
+	cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
+	cv::imshow("Display window", image);
+	//std::sleep(1);
+	cv::waitKey(0);
 }
 
 void Tracker::findBestMatch(const cv::Mat& image, cv::Point& lastPosition, AdaBoost& adaBoost)
 {
+        
 }
+
+u32 Tracker::getRandomDisplacement(u32 min, u32 max)
+{
+        return (max - min) * rand() + min;
+}
+
 
 void Tracker::generateTrainingData(std::vector<Example>& data, const std::vector<cv::Mat>& imageSequence, const std::vector<cv::Point>& referencePoints)
 {
+        int lbl_positive = 1;
+        int lbl_negative = 0;
+        for(int i = 0; i < imageSequence.size(); i++){
+                // positive example
+                cv::Point pt_pos = referencePoints[i];
+                
+                // negative examples
+                cv::Point pt_neg1(
+                        pt_pos.x - _displacement_x + getRandomDisplacement(), 
+                        pt_pos.y - _displacement_y + getRandomDisplacement()
+                );
+                cv::Point pt_neg2(
+                        pt_pos.x - _displacement_x + getRandomDisplacement(), 
+                        pt_pos.y + _displacement_y + getRandomDisplacement()
+                );
+                cv::Point pt_neg3(
+                        pt_pos.x + _displacement_x + getRandomDisplacement(), 
+                        pt_pos.y - _displacement_y + getRandomDisplacement()
+                );
+                cv::Point pt_neg4(
+                        pt_pos.x + _displacement_x + getRandomDisplacement(), 
+                        pt_pos.y + _displacement_y + getRandomDisplacement()
+                );
+                
+                Vector hist_pos, hist_neg1, hist_neg2, hist_neg3, hist_neg4;
+                
+                computeHistogram(imageSequence[i], pt_pos, hist_pos);
+                computeHistogram(imageSequence[i], pt_neg1, hist_neg1);
+                computeHistogram(imageSequence[i], pt_neg2, hist_neg2);
+                computeHistogram(imageSequence[i], pt_neg3, hist_neg3);
+                computeHistogram(imageSequence[i], pt_neg4, hist_neg4);
+                
+                data[i].attributes = hist_pos;
+                data[i].label = lbl_positive;
+                
+                data[i+1].attributes = hist_neg1;
+                data[i+1].label = lbl_negative;
+                data[i+2].attributes = hist_neg2;
+                data[i+2].label = lbl_negative;
+                data[i+3].attributes = hist_neg3;
+                data[i+3].label = lbl_negative;
+                data[i+4].attributes = hist_neg4;
+                data[i+4].label = lbl_negative;
+        }
 }
 
 void Tracker::loadImage(const std::string& imageFile, cv::Mat& image)
@@ -32,6 +113,17 @@ void Tracker::loadTestFrames(const char* testDataFile, std::vector<cv::Mat>& ima
 
 void Tracker::loadTrainFrames(const char* trainDataFile, std::vector<cv::Mat>& imageSequence, std::vector<cv::Point>& referencePoints)
 {
+        std::ifstream f(trainDataFile);
+        std::string prefix = "./nemo/";
+	std::string frame_name;
+        u32 x,y;
+        while(f >> frame_name >> x >> y){
+               frame_name = prefix + frame_name;
+               cv::Mat img = cv::imread(frame_name);
+               cv::Point p(x,y);
+               imageSequence.push_back(img);
+               referencePoints.push_back(p);
+        }
 }
 
 
