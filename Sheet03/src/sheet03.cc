@@ -102,8 +102,8 @@ void nr3(){
 
 int main(int argc, char* argv[])
 {
-//         nr1();
+        nr1();
 //         nr2("./splice/splice.train", "./splice/splice.test");
-        nr3();
+//         nr3();
         return 0;
 }
